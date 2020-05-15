@@ -14,7 +14,7 @@
 
 # COMMAND ----------
 
-labeling_data <- function (in_table = "prod_raw.dm1211_aat_borrowing_money", 
+labeling_data <- function (in_table = "prod_delta.dm1211_aat_borrowing_money", 
                            month_lag = 1) {
   
   # Target month
