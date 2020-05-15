@@ -86,6 +86,10 @@ sdf_dim(dt_final)
 
 # COMMAND ----------
 
+spark_write_table(dt_final, "mck_aa.te02_pre_ea_scoring", mode = "overwrite")
+
+# COMMAND ----------
+
 glimpse(dt_final)
 
 # COMMAND ----------
@@ -120,8 +124,3 @@ model_scoring(dt_final)
 # COMMAND ----------
 
 list_export(lag_time = 1 + lag_shift, new = F)
-
-# COMMAND ----------
-
-# MAGIC %fs
-# MAGIC ls /mnt/cvm02/cvm_output/MCK/AA/CAMPAIGN/
