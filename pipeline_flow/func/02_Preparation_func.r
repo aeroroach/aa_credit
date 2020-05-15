@@ -20,10 +20,10 @@ prep_data <- function(df_input = NULL,
   print(paste("Target month is :", end_month))
   
   # List of original source tables
-  prof_table <- "prod_raw.dm07_sub_clnt_info"
+  prof_table <- "prod_delta.dm07_sub_clnt_info"
   usage_table <- "mck_aa.usage_agg_monthly"
   surv_table <- "mck.topup_svv"
-  valid_table <- "prod_raw.dm23_prepaid_remain_balance_validity"
+  valid_table <- "prod_delta.dm23_prepaid_remain_balance_validity"
   
   # Loading source data
   prof <- tbl(sc, prof_table)
@@ -43,7 +43,7 @@ prep_data <- function(df_input = NULL,
   mutate(register_date = to_date(activation_date)) %>%
   select(analytic_id, national_id, crm_sub_id, register_date, ddate,
                age, credit_limit, days_active, service_month, foreigner_flag, gender, charge_type, mobile_status, 
-               mnp_flag, master_segment_id, crm_most_usage_province, 
+               mnp_flag, master_segment_id, 
                handset_launchprice, handset_os, 
                norms_net_revenue_avg_3mth_p0_p2, norms_net_revenue_gprs, norms_net_revenue_vas, norms_net_revenue_voice) -> prof
 
@@ -89,7 +89,7 @@ feat_enhance <- function(data_input,
                     his_time = 6) {
   
   # Table sources
-  prof_table <- "prod_raw.dm07_sub_clnt_info"
+  prof_table <- "prod_delta.dm07_sub_clnt_info"
   usage_table <- "mck_aa.usage_agg_monthly"
   
   # Target month
@@ -167,12 +167,12 @@ dt_cleansing <- function (dt_input, training = T) {
     dt_trans %>%
     ft_imputer(input_cols=im_mean, output_cols=im_mean, strategy="mean") %>%
     select(analytic_id, crm_sub_id, bad_flag, national_id, register_date, age, handset_launchprice, credit_limit, 
-          mnp_flag, master_segment_id, crm_most_usage_province) -> mean_im
+          mnp_flag, master_segment_id) -> mean_im
   } else {
     dt_trans %>%
     ft_imputer(input_cols=im_mean, output_cols=im_mean, strategy="mean") %>%
     select(analytic_id, crm_sub_id, national_id, register_date, age, handset_launchprice, credit_limit, 
-          mnp_flag, master_segment_id, crm_most_usage_province) -> mean_im
+          mnp_flag, master_segment_id) -> mean_im
   }
   
   # Unknown imputing
@@ -216,29 +216,6 @@ dt_cleansing <- function (dt_input, training = T) {
   # MNP flag
   base_clean %>%
   mutate(mnp_flag = ifelse(is.na(mnp_flag),"N" , mnp_flag)) -> base_clean
-  
-  # Checking for training and scoring process
-  if (training == T) {
-      base_clean %>%
-      filter(!is.na(crm_most_usage_province)) %>%
-      count(crm_most_usage_province) %>%
-      arrange(desc(n)) %>%
-      top_n(50) %>%
-      collect() -> most_province
-    
-      write_csv(most_province, top_province_export)
-    
-  } else {
-    most_province <- read_csv(top_province_export)
-  }
-  
-  # Regroup province
-  base_clean %>%
-  mutate(top30_province = case_when(
-  is.na(crm_most_usage_province) ~ "Others", 
-  crm_most_usage_province %in% most_province$crm_most_usage_province ~ crm_most_usage_province, 
-  TRUE ~ "Others")) %>%
-  select(-crm_most_usage_province) -> base_clean
   
   sdf_register(base_clean, "base_clean")
   tbl_cache(sc, "base_clean")
