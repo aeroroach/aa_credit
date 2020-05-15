@@ -10,7 +10,11 @@
 
 # COMMAND ----------
 
-model_training <- function (dt_input, sample_frac = 0.1) {
+model_training <- function (dt_input, sample_frac = 0.1, lag_time = 4) {
+  
+  # Logging month profile
+  month_end <- ceiling_date(today() %m-% months(lag_time), unit="month") %m-% days(1)
+  mlflow_log_param("Profile Month", month_end)
   
   dt_input %>%
   sdf_sample(fraction = sample_frac, replacement = F) -> dt_down
@@ -26,18 +30,28 @@ model_training <- function (dt_input, sample_frac = 0.1) {
   dt_hex$gender <- as.factor(dt_hex$gender)
   dt_hex$handset_os <- as.factor(dt_hex$handset_os)
   dt_hex$serenade <- as.factor(dt_hex$serenade)
-  dt_hex$top30_province <- as.factor(dt_hex$top30_province)
   
   # Define relevance variables
   var_list <- h2o.names(dt_hex)
   ommit_var <- c(-1:-4)
   var_model <- var_list[ommit_var]
   
+  # Logging feature
+  write(var_model, file = "ea_var.txt")
+  mlflow_log_artifact("ea_var.txt")
+  
   # Splitting data frame
   dt.split <- h2o.splitFrame(dt_hex, ratios = 0.75, seed = 567)
   
   dt.train <- dt.split[[1]]
   dt.test <- dt.split[[2]]
+  
+  # Logging hyper parameter
+  mlflow_log_param("ntrees", 400)
+  mlflow_log_param("learn_rate", 0.02)
+  mlflow_log_param("max_depth", 6)
+  mlflow_log_param("sample_rate", 0.56)
+  mlflow_log_param("col_sample_rate", 0.34)
   
   best_xg <- h2o.xgboost(training_frame = dt.train , 
                           x = var_model , 
@@ -52,9 +66,25 @@ model_training <- function (dt_input, sample_frac = 0.1) {
                          )
   
   xg_perf <- h2o.performance(best_xg, newdata = dt.test)
-  print(paste("AUC is :", h2o.auc(xg_perf)))
-  return(best_xg)
+  fmc_auc <- h2o.auc(xg_perf)
+  print(paste("AUC is :", fmc_auc))
+                   
+  # Logging metrics
+  mlflow_log_metric("AUC", fmc_auc)
+ 
+  png("ea_auc.png")
+  plot(xg_perf,type='roc')
+  dev.off()
+  mlflow_log_artifact("ea_auc.png")
   
+  write_csv(h2o.varimp(best_xg), "ea_varimp.csv")
+  mlflow_log_artifact("ea_varimp.csv")
+  
+  write_csv(h2o.gainsLift(best_xg, newdata = dt.test), "ea_lift.csv")
+  mlflow_log_artifact("ea_lift.csv")
+                   
+  return(best_xg)
+                   
 }
 
 # COMMAND ----------
@@ -80,7 +110,6 @@ model_scoring <- function(dt_input,
   dt_score_hex$gender <- as.factor(dt_score_hex$gender)
   dt_score_hex$handset_os <- as.factor(dt_score_hex$handset_os)
   dt_score_hex$serenade <- as.factor(dt_score_hex$serenade)
-  dt_score_hex$top30_province <- as.factor(dt_score_hex$top30_province)
   
   pred <- h2o.predict(object = classifier, newdata = dt_score_hex)
   pred$p0 <- round(pred$p0, digit = 4)
@@ -98,7 +127,7 @@ list_export <- function(lag_time = 1, new = F,
                         path = "/mnt/cvm02/cvm_output/MCK/AA/CAMPAIGN/h2o/", 
                        gen_dir = "/mnt/cvm02/cvm_output/MCK/AA/CAMPAIGN/") {
   
-  out_table <- "mck_aa.tb08_pre_scoring_output"
+  out_table <- "mck_aa.te03_pre_ea_output"
   end_month <- ceiling_date(today() %m-% months(lag_time), unit="month") %m-% days(1)
   
   dt <- spark_read_csv(sc, "score", path, delimiter = ",")
