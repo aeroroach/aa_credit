@@ -21,12 +21,11 @@ usage_gen <- function(lag_time = 1) {
   # Checkine latest data
   usage_sum %>%
   distinct(ddate) %>%
-  arrange(desc(ddate)) %>%
-  top_n(1) %>%
+  filter(ddate == max(ddate)) %>%
   collect() -> latest_ddate
   latest_ddate <- latest_ddate$ddate[1]
   
-  if (end_month != latest_ddate) {
+  if (end_month > latest_ddate) {
     
     # Topup -------------------------------------------
     topup_daily %>%
