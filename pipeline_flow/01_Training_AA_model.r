@@ -67,6 +67,10 @@ sdf_dim(dt_prep)
 
 # COMMAND ----------
 
+glimpse(dt_prep)
+
+# COMMAND ----------
+
 # MAGIC %md ## 3: Feature enhancing step
 
 # COMMAND ----------
@@ -97,6 +101,15 @@ sdf_dim(dt_final)
 
 # COMMAND ----------
 
+# DBTITLE 1,Writing final table
+spark_write_table(dt_final, "mck_aa.te01_pre_ea_training", mode = "overwrite")
+
+# COMMAND ----------
+
+dt_final <- tbl(sc, "mck_aa.te01_pre_ea_training")
+
+# COMMAND ----------
+
 glimpse(dt_final)
 
 # COMMAND ----------
@@ -110,6 +123,11 @@ library(rsparkling)
 
 # COMMAND ----------
 
+library(mlflow)
+install_mlflow()
+
+# COMMAND ----------
+
 # MAGIC %run ./func/03_Model_func
 
 # COMMAND ----------
@@ -119,7 +137,13 @@ model_path <- "/dbfs/mnt/cvm02/user/pitchaym/h2o_model_aa/"
 
 # COMMAND ----------
 
-best_xg <- model_training(dt_final)
+# ML flow start log
+mlflow_start_run()
+
+best_xg <- model_training(dt_final, lag_time = 4 + lag_shift)
+
+# ML flow end log
+mlflow_end_run()
 
 # COMMAND ----------
 
