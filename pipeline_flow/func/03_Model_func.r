@@ -172,4 +172,6 @@ list_export <- function(lag_time = 1, new = F,
   
   print(paste(file_name, "has been written"))
   
+  glimpse(dt)
+  
 }
