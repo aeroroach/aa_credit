@@ -139,38 +139,37 @@ list_export <- function(lag_time = 1, new = F,
         aa_percentile = ntile(aa_score, 100),
         aa_decile = 11-aa_decile, 
         aa_percentile = 101-aa_percentile,
-        charge_type = "Post-paid") -> dt
+        charge_type = "Pre-paid") -> dt
   
   dt %>%
   mutate(prof_date = as.Date(end_month)) -> dt
 
   # Export to Databricks Table
-  if (new == T) {
-    spark_write_table(dt, out_table, partition_by = "prof_date")
-    print(paste(out_table, "has been created"))
-  } else {
-    spark_write_table(dt, out_table, mode = "append")
-    print(paste(out_table, end_month, "has been appended"))
-  }
+#   if (new == T) {
+#     spark_write_table(dt, out_table, partition_by = "prof_date")
+#     print(paste(out_table, "has been created"))
+#   } else {
+#     spark_write_table(dt, out_table, mode = "append")
+#     print(paste(out_table, end_month, "has been appended"))
+#   }
   
   # Export file output
   
-#   dt %>%
-#   sdf_coalesce(1) -> dt_export
+  dt %>%
+  sdf_coalesce(1) -> dt_export
   
-#   spark_write_csv(dt_export, paste0(gen_dir,"/post"), delimiter="|")
-#   target_file <- list.files(paste0("/dbfs", gen_dir, "/post/"), pattern = "csv$")
-  
-#   file_name <- format(Sys.Date(), "%Y%m")
-#   file_name <- paste0("FMC_post_" ,file_name, "_SCORE.txt")
-  
-#   file.rename(from = file.path(paste0("/dbfs", gen_dir, "/post/", target_file)), 
-#             to = file.path(paste0("/dbfs", gen_dir, file_name)))
-  
-#   unlink(paste0("/dbfs", gen_dir, "/post/"), recursive = T)
+  spark_write_csv(dt_export, paste0(gen_dir,"/pre"), delimiter="|")
+  target_file <- list.files(paste0("/dbfs", gen_dir, "/pre/"), pattern = "csv$")
+
+  file_name <- format(Sys.Date(), "%Y%m")
+  file_name <- paste0("EA_pre_" ,file_name, "_SCORE.txt")
+
+  file.rename(from = file.path(paste0("/dbfs", gen_dir, "/pre/", target_file)), 
+            to = file.path(paste0("/dbfs", gen_dir, file_name)))
+
+  unlink(paste0("/dbfs", gen_dir, "/pre/"), recursive = T)
   unlink(paste0("/dbfs", gen_dir, "/h2o/"), recursive = T)
   
-#   print(paste(file_name, "has been written"))
-#   glimpse(dt)
+  print(paste(file_name, "has been written"))
   
 }
