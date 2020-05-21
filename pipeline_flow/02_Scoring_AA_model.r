@@ -1,6 +1,22 @@
 # Databricks notebook source
 lag_shift <- as.numeric(dbutils.widgets.get("lag"))
+
+# Production
+# dbutils.widgets.remove("lag")
+# lag_shift <- 0 
+
 lag_shift
+
+# COMMAND ----------
+
+# DBTITLE 1,Delay Time
+delay <- function(x)
+{
+    p1 <- proc.time()
+    Sys.sleep(x)
+    proc.time() - p1 # The cpu usage should be negligible
+}
+delay(240)
 
 # COMMAND ----------
 
@@ -87,6 +103,10 @@ sdf_dim(dt_final)
 # COMMAND ----------
 
 spark_write_table(dt_final, "mck_aa.te02_pre_ea_scoring", mode = "overwrite")
+
+# COMMAND ----------
+
+dt_final <- tbl(sc, "mck_aa.te02_pre_ea_scoring")
 
 # COMMAND ----------
 
