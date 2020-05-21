@@ -133,12 +133,12 @@ list_export <- function(lag_time = 1, new = F,
   dt <- spark_read_csv(sc, "score", path, delimiter = ",")
   
   dt %>%
-  rename(aa_score = p0) %>%
+  rename(ea_score = p0) %>%
   mutate(register_date = to_date(register_date), 
-        aa_decile = ntile(aa_score, 10),
-        aa_percentile = ntile(aa_score, 100),
-        aa_decile = 11-aa_decile, 
-        aa_percentile = 101-aa_percentile,
+        ea_decile = ntile(ea_score, 10),
+        ea_percentile = ntile(ea_score, 100),
+        ea_decile = 11-ea_decile, 
+        ea_percentile = 101-ea_percentile,
         charge_type = "Pre-paid") -> dt
   
   dt %>%
@@ -162,7 +162,8 @@ list_export <- function(lag_time = 1, new = F,
   target_file <- list.files(paste0("/dbfs", gen_dir, "/pre/"), pattern = "csv$")
 
   file_name <- format(Sys.Date(), "%Y%m")
-  file_name <- paste0("EA_pre_" ,file_name, "_SCORE.txt")
+  file_date <- format(Sys.Date(), "%Y%m%d")
+  file_name <- paste0("EA_pre_" ,file_name, "_", file_date, "_SCORE.txt")
 
   file.rename(from = file.path(paste0("/dbfs", gen_dir, "/pre/", target_file)), 
             to = file.path(paste0("/dbfs", gen_dir, file_name)))
