@@ -162,8 +162,8 @@ list_export <- function(lag_time = 1, new = F,
   target_file <- list.files(paste0("/dbfs", gen_dir, "/pre/"), pattern = "csv$")
 
   file_name <- format(Sys.Date(), "%Y%m")
-  file_date <- format(Sys.Date(), "%Y%m%d")
-  file_name <- paste0("EA_pre_" ,file_name, "_", file_date, "_SCORE.txt")
+#   file_date <- format(Sys.Date(), "%Y%m%d")
+  file_name <- paste0("EA_pre_" ,file_name, "_SCORE.txt")
 
   file.rename(from = file.path(paste0("/dbfs", gen_dir, "/pre/", target_file)), 
             to = file.path(paste0("/dbfs", gen_dir, file_name)))
