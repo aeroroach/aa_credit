@@ -15,8 +15,8 @@ usage_gen <- function(lag_time = 1) {
   
   # Loading data
   usage_sum <- tbl(sc, output_tbl)
-  topup_daily <- tbl(sc, "prod_raw.dm01_fin_top_up")
-  usage_daily <- tbl(sc, "prod_raw.dm09_mobile_day_split")
+  topup_daily <- tbl(sc, "prod_delta.dm01_fin_top_up")
+  usage_daily <- tbl(sc, "prod_delta.dm09_mobile_day_split")
   
   # Checkine latest data
   usage_sum %>%
